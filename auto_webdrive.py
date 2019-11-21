@@ -20,6 +20,8 @@ import re
 from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.preprocessing import scale
+import matplotlib.tri as mtri
 
 
 def url2soup(url):
@@ -47,11 +49,18 @@ if __name__ == '__main__':
 
     year = datetime.now().year
 
-    years = np.arange(year-5,year+3, 1)
+    years = np.arange(year-5,year+2, 1)
+    # years = [2015]
 
     df = []
 
+    df_filtered = []
+
     for year in years:
+
+        df_test = []
+
+        df_unfiltered = []
 
         i = 0
 
@@ -80,7 +89,7 @@ if __name__ == '__main__':
     
         # df = pd.DataFrame(columns=['Name','Price', 'Miles'])
 
-        for i in range(-1,numPages):
+        for i in range(0,numPages+1):
     
             # breakpoint()
     
@@ -125,22 +134,98 @@ if __name__ == '__main__':
     
                     print(data)
     
-                    df.append(data)
+                    df_unfiltered.append(data)
     
                 except:
                     print('error')
                     continue
-    breakpoint()
+
+        df_unfiltered = np.array(df_unfiltered)
+
+        df_test = scale(df_unfiltered, axis=0, with_mean = True, with_std = True)
+
+        z_test = np.sqrt(df_test[:,1]**2+df_test[:,2]**2)
+
+        del_indexs = [n for n,i in enumerate(z_test) if i>1]
+
+        df_fil = df_unfiltered
+
+        for i in sorted(del_indexs, reverse=True):
+            df_fil = np.delete(df_fil, np.s_[i],axis = 0)
+
+        # breakpoint()
+
+        df.append(df_unfiltered)
+
+        df_filtered.append(df_fil)
+
+
+    # breakpoint()
+
+    df = np.vstack(df)
+    df_filtered = np.vstack(df_filtered)
 
     df = pd.DataFrame(df, columns=['Year','Price', 'Miles'])
+    df_filtered = pd.DataFrame(df_filtered, columns=['Year','Price', 'Miles'])
 
-    fig = plt.figure()
-    ax = plt.axes(projection = '3d')
-    ax.scatter3D(df['Year'],df['Miles'],df['Price'])
+    df.to_csv(r'unfiltered_test.csv', index = False)
+    df_filtered.to_csv(r'filtered_test.csv', index = False)
 
-    ax.set_xlim(2014,max(df['Year']+1))
-    ax.set_ylim(0,100000)
-    ax.set_zlim(min(df['Price']-1000),40000)
+    triang = mtri.Triangulation(df_filtered['Year'], df_filtered['Miles'])
+    triang2 = mtri.Triangulation(df_filtered['Year'], df_filtered['Miles'])
+    # fig = plt.figure()
+    # ax = fig.add_subplot(1,1,1)
+    
+    # ax.triplot(triang, c="#D3D3D3", marker='.', markerfacecolor="#DC143C", markeredgecolor="black", markersize=10)
+    
+    # ax.set_xlabel('Year')
+    # ax.set_ylabel('Miles')
+    # plt.show()
+
+    # x = pd.series.tolist(df_filtered['Year'])
+    # y = pd.series.tolist(df_filtered['Miles'])
+
+    # def apply_mask(triang, alpha=1.5):
+
+    #     breakpoint()
+    #     # Mask triangles with sidelength bigger some alpha
+    #     triangles = triang.triangles
+    #     # Mask off unwanted triangles.
+    #     xtri = x[triangles] - np.roll(x[triangles], 1, axis=1)
+    #     ytri = y[triangles] - np.roll(y[triangles], 1, axis=1)
+    #     maxi = np.max(np.sqrt(xtri**2 + ytri**2), axis=1)
+    #     # apply masking
+    #     triang.set_mask(maxi > alpha)
+
+    # apply_mask(triang2, alpha=1.5)
+
+    # fig = plt.figure()
+    # ax = fig.add_subplot(1,1,1, projection='3d')
+    
+    # ax.plot_trisurf(triang2, df_filtered['Price'], cmap='jet')
+    # ax.scatter(df_filtered['Year'],df_filtered['Miles'],df_filtered['Price'], marker='.', s=10, c="black", alpha=0.5)
+    # ax.view_init(elev=60, azim=-45)
+    
+    # ax.set_xlabel('Year')
+    # ax.set_ylabel('Miles')
+    # ax.set_zlabel('Price')
+    # plt.show()
+
+    # fig = plt.figure()
+    # ax = plt.axes(projection = '3d')
+    # ax.scatter3D(df['Year'],df['Miles'],df['Price'])
+
+    # ax.set_xlim(min(df['Year']-1),max(df['Year']+1))
+    # ax.set_ylim(0,100000)
+    # ax.set_zlim(min(df['Price']-1000),40000)
+
+    # fig = plt.figure()
+    # ax = plt.axes(projection = '3d')
+    # ax.scatter3D(df_filtered['Year'],df_filtered['Miles'],df_filtered['Price'])
+
+    # ax.set_xlim(min(df_filtered['Year']-1),max(df_filtered['Year']+1))
+    # ax.set_ylim(0,100000)
+    # ax.set_zlim(min(df['Price']-1000),40000)
 
 
     # con = urllib.urlopen(req)
