@@ -56,6 +56,8 @@ if __name__ == '__main__':
 
     df_filtered = []
 
+    df_surface = []
+
     for year in years:
 
         df_test = []
@@ -159,17 +161,32 @@ if __name__ == '__main__':
 
         df_filtered.append(df_fil)
 
+        # breakpoint()
+
+        p = np.polyfit(df_unfiltered[:,2],df_unfiltered[:,1], 2)
+        z = np.poly1d(p)
+        
+        reg_miles = np.linspace(min(df_unfiltered[:,2]), max(df_unfiltered[:,2]), 100)
+        reg_price = z(reg_miles)
+        
+        df_surface.append(np.transpose([[year]*len(reg_miles), reg_price, reg_miles]))
+
 
     # breakpoint()
 
     df = np.vstack(df)
     df_filtered = np.vstack(df_filtered)
+    df_surface = np.vstack(df_surface)
+
+    # breakpoint()
 
     df = pd.DataFrame(df, columns=['Year','Price', 'Miles'])
     df_filtered = pd.DataFrame(df_filtered, columns=['Year','Price', 'Miles'])
+    df_surface = pd.DataFrame(df_surface, columns=['Year','Price', 'Miles'])
 
     df.to_csv(r'unfiltered_test.csv', index = False)
     df_filtered.to_csv(r'filtered_test.csv', index = False)
+    df_surface.to_csv(r'surface_test.csv', index = False)
 
     triang = mtri.Triangulation(df_filtered['Year'], df_filtered['Miles'])
     triang2 = mtri.Triangulation(df_filtered['Year'], df_filtered['Miles'])

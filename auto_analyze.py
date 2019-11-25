@@ -11,11 +11,32 @@ import numpy as np
 import matplotlib.tri as tri
 import matplotlib.pyplot as plt
 
-df = pd.read_csv('filtered_test.csv')
+df = pd.read_csv('unfiltered_test.csv')
 
 x = np.array(df['Year'])
 y = np.array(df['Miles'])
 z = np.array(df['Price'])
+
+# x_test = []
+
+# for i in range(len(x)):
+
+#     if x[i] == 2016:
+#         x_test.append([y[i],z[i]])
+
+# breakpoint()
+
+# x_test = np.array(x_test)
+
+# p = np.polyfit(x_test[:,0],x_test[:,1], 2)
+# z = np.poly1d(p)
+
+# x_plot = np.linspace(min(x_test[:,0]), max(x_test[:,0]), 100)
+# y_plot = z(x_plot)
+
+# _ = plt.plot(x_test[:,0], x_test[:,1], '.', x_plot, z(x_plot), '-')
+# plt.show()
+
 
 triang1 = tri.Triangulation(x, y)
 triang2 = tri.Triangulation(x, y)
@@ -33,13 +54,13 @@ def apply_mask(triang, alpha=0.4):
     # apply masking
     triang.set_mask(maxi > alpha)
 
-apply_mask(triang2, alpha=5)
+apply_mask(triang2, alpha=15)
 
 
 fig = plt.figure()
 ax = fig.add_subplot(1,1,1, projection='3d')
 
-ax.plot_trisurf(triang2, z, cmap='jet')
+# ax.plot_trisurf(triang2, z, cmap='jet')
 ax.scatter(x, y, z, marker='.', s=10, c="black", alpha=0.5)
 ax.view_init(elev=60, azim=-45)
 
