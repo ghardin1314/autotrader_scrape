@@ -21,7 +21,6 @@ class result_obj:
         self._lock = threading.Lock()
 
     def get_makes(self):
-        # breakpoint()
         url_base = 'https://www.autotrader.com'
         path = '/rest/searchform/advanced/update'
         url = url_base + path
@@ -61,7 +60,6 @@ class result_obj:
             print(f'error on {make["name"]}')
 
     def get_trims(self, make, model, make_index, model_index):
-        # breakpoint()
         url_base = 'https://www.autotrader.com'
         path = '/rest/searchform/advanced/update'
         url = url_base + path
@@ -91,42 +89,27 @@ if __name__ == '__main__':
 
     # breakpoint()
 
+    #initialize new result object instance
+
     test = result_obj()
+    
+    #first get all makes offered by Autotrader
 
     test.get_makes()
 
-    text_val = test.value
-
-    # breakpoint()
-
     time_start = time.time()
-
-    # breakpoint()
+    
+    #Find all models for each make of car. Threaded for efficency
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
 
-
         for make_index, make in enumerate(test.value):
-
-            # breakpoint()
 
             executor.submit(test.get_models, make['value'], make_index)
 
-    # breakpoint()
-
     print(time.time()-time_start)
-
-    # for make_index, make in enumerate(test.value):
-
-    #         models = make['models']
-
-    #         for model_index, model in enumerate(models):
-
-    #             # breakpoint()
-
-    #             print(f'getting trims for {model}')
-
-    #             test.get_trims(make['value'], model['value'], make_index, model_index)
+    
+    #Find all Trims for each model of car. Threaded for efficency
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
 
@@ -136,12 +119,13 @@ if __name__ == '__main__':
 
             for model_index, model in enumerate(models):
 
-                # breakpoint()
-
                 executor.submit(test.get_trims, make['value'], model['value'], make_index, model_index)
+    
     print(time.time()-time_start)
 
     makes = test.value
+    
+    #write this to database. Dont after aquiring data for database dependency
 
     for make in makes:
 
@@ -163,12 +147,12 @@ if __name__ == '__main__':
     
     db.session.commit()
     
-    conn = lite.connect('models.db')
-    cur = conn.cursor()
+    # conn = lite.connect('models.db')
+    # cur = conn.cursor()
     
-    with conn:
-        cur.execute("SELECT * FROM make")
-        print(cur.fetchall())
+    # with conn:
+    #     cur.execute("SELECT * FROM make")
+    #     print(cur.fetchall())
 
 
 

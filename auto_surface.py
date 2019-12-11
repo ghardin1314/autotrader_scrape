@@ -85,6 +85,8 @@ if __name__ == '__main__':
     A = np.c_[np.ones(data.shape[0]), data[:,:2], np.prod(data[:,:2], axis=1), data[:,:2]**2, data[:,0]**2*data[:,1], data[:,1]**2*data[:,0], data[:,:2]**3]
     C,_,_,_ = scipy.linalg.lstsq(A, data[:,2])
     
+    breakpoint()
+    
     #2nd order
     # Z = np.dot(np.c_[np.ones(XX.shape), XX, YY, XX*YY, XX**2, YY**2], C).reshape(X.shape)
     
