@@ -15,6 +15,14 @@ import threading
 import concurrent.futures
 import time
 
+"""
+This file creates .json files to populate autoscrape database 
+for options to pick from.
+
+Sleep in the get_trims method is to avoid api limiting. Takes a long time to run.
+"""
+
+
 class result_obj:
     def __init__(self):
         self.value = []
@@ -37,6 +45,8 @@ class result_obj:
                 self.value = makes
         except:
             print('error on makes')
+            exit()
+
 
     def get_models(self, make, make_index):
         url_base = 'https://www.autotrader.com'
@@ -69,20 +79,43 @@ class result_obj:
                        'maxMileage': '0',
                        'searchRadius': '0',
                        'zip': '90250'}
+
+        time.sleep(10)
+                    
         response = requests.get(url, headers=headers, params = payload)
         results = response.json()
         trims = results['searchFormFields']['trim']['searchOptions'][0]['options']
         del trims[0]
         with self._lock:
             model = self.value[make_index]['models'][model_index]
-            # print(f'getting trims for {model}')
+            print(f'getting trims for {model}')
             try:
                 model['trims'] = trims
             except:
                 model['trims'] = []
                 print(f"error on {model['value']}")
-            # print(model['trims'])
+            print(model['trims'])
             self.value[make_index]['models'][model_index] = model
+
+def pull_data(results):
+
+    results.get_makes()
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+
+        for make_index, make in enumerate(results.value):
+
+            executor.submit(results.get_models, make['value'], make_index)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+
+        for make_index, make in enumerate(results.value):
+
+            models = make['models']
+
+            for model_index, model in enumerate(models):
+
+                executor.submit(results.get_trims, make['value'], model['value'], make_index, model_index)
 
 
 if __name__ == '__main__':
@@ -92,40 +125,12 @@ if __name__ == '__main__':
     #initialize new result object instance
 
     test = result_obj()
+
+    pull_data(test)
     
-    #first get all makes offered by Autotrader
-
-    test.get_makes()
-
-    time_start = time.time()
-    
-    #Find all models for each make of car. Threaded for efficency
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-
-        for make_index, make in enumerate(test.value):
-
-            executor.submit(test.get_models, make['value'], make_index)
-
-    print(time.time()-time_start)
-    
-    #Find all Trims for each model of car. Threaded for efficency
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-
-        for make_index, make in enumerate(test.value):
-
-            models = make['models']
-
-            for model_index, model in enumerate(models):
-
-                executor.submit(test.get_trims, make['value'], model['value'], make_index, model_index)
-    
-    print(time.time()-time_start)
-
     makes = test.value
     
-    #write this to database. Dont after aquiring data for database dependency
+    #write this to database. Done after aquiring data for database dependency
 
     for make in makes:
 
@@ -147,13 +152,6 @@ if __name__ == '__main__':
     
     db.session.commit()
     
-    # conn = lite.connect('models.db')
-    # cur = conn.cursor()
-    
-    # with conn:
-    #     cur.execute("SELECT * FROM make")
-    #     print(cur.fetchall())
-
 
 
 
